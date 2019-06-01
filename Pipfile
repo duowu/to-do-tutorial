@@ -1,0 +1,18 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+deepdiff = { version = "~=4.0.6", index = "pypi" }
+faker = { version = "~=1.0.7", index = "pypi" }
+requests = { version = "~=2.22.0", index = "pypi" }
+
+[packages]
+flask = { version = "~=1.0.3", index = "pypi" }
+flask-restful = { version = "~=0.3.7", index = "pypi" }
+flask-sqlalchemy = { version = "~=2.4.0", index = "pypi" }
+jsonpickle = { version = "~=1.2", index = "pypi" }
+
+[requires]
+python_version = "3.7"
