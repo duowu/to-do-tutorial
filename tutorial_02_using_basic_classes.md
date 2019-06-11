@@ -3,6 +3,12 @@
 ## Table of Contents
 
 * [Create a class to represent an item](#create-a-class-to-represent-an-item)
+* [Update the fetch all items route](#update-the-fetch-all-items-route)
+* [Update the fetch one item route](#update-the-fetch-one-item-route)
+* [Update the create item route](#update-the-create-item-route)
+* [Update the update item route](#update-the-update-item-route)
+* [Update the partial update item route](#update-the-partial-update-item-route)
+* [Update the delete item route](#)
 
 ## Create a class to represent an item
 
