@@ -49,7 +49,7 @@ Hello, World!
 
 ## Set up the database
 
-* We'll use a simple SQLite3 database to store data for the application. SQLite3 support is built into python, so we can simple import the corresponding module.
+* We'll use a simple SQLite3 database to store data for the application. SQLite3 support is built into python, so we can simply import the corresponding module.
 * Because we will be connecting to the database in multiple places in the file, we should create a string which contains the path to the database file.
 * And finally, let's create a function to create any tables used in the application before the application start. We will have to connect to the database before executing the SQL statement and make sure to close the connection afterwards. Note the try-except block which will rollback if there are any errors, and we can ignore any errors where the table already exists.
 
@@ -119,9 +119,9 @@ if __name__ == '__main__':
 
 * With the database setup, we can now create a route to fetch all of the to-do items from the database using the HTTP GET method.
 * As with the `create_tables` function from earlier, we need to establish a connection to the database before executing any SQL statement and make sure to close the connection afterwards.
+* A simple `SELECT` statement will get us all of the records from the database, which we only then need to create a dictionary for each record returned.
 * Unlike the simple `hello_world` route from earlier, we will need to create a more complex response with serialized data.
 * After importing the `Response` class from the `flask` module, this route is to return an instance of a `Response` object.
-* A simple `SELECT` statement will get us all of the records from the database, which we only then need to create a dictionary for each record returned.
 * We can use the `encode` function from the `jsonpickle` module to help with the serialization to a return a JSON encoded string in the response payload.
 
 ```python
@@ -368,7 +368,7 @@ $ curl -s http://127.0.0.1:8002/items
 * Now that we have a way to create an item in the database, we should build a route to delete an item from the database using the HTTP DELETE method.
 * As part of the route, the user should supply the unique identifier of the item to delete.
 * As with the HTTP POST method, we need to mind the database connection and catch any raised exception to return back to the user.
-* After a simple `DELETE` statement, we should check if anything was actually removed from the database. If it isn't we should return not found error back to the user. Otherwise, we simply return a response with no content but with a success response code.
+* After a simple `DELETE` statement, we should check if anything was actually removed from the database. If it isn't we should return not found error back to the user. Otherwise, we simply return a response with no content but with a success status code.
 
 ```python
 import sqlite3
@@ -735,7 +735,7 @@ $ curl -X PUT -s http://127.0.0.1:8002/items/2
 
 ## Create a route to partially update an item
 
-* The user can update an item, but the POST route requires the user to specify all of the desired attributes. It really replaces the entire item with data supplied from the user.
+* The user can update an item, but the POST route which we created requires the user to specify all of the desired attributes. It really replaces the entire item with data supplied from the user.
 * Let's create a route which allows the user to only partially update a item in the database by its unique identifier using the HTTP PATCH method.
 * As with the PUT route, the user should supply the unique identifier as part  of the route.
 * As with the PUT route, we expect the user to submit a JSON encoded string as part of the payload of the request. However, this time, all of the properties are optional and only those specified will be updated.
