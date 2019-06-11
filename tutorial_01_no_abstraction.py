@@ -179,7 +179,7 @@ def create_item():
         # the response data
         response = Response(
             response=encode(value=item, unpicklable=False),
-            status=201,
+            status=200,
             mimetype='application/json'
         )
     except Exception as error:
@@ -435,7 +435,7 @@ def delete_item(uid):
         connection.commit()
 
         # Create the HTTP response object with no payload
-        response = Response(status=204)
+        response = Response(status=200)
 
     except Exception as error:
         # If any errors occurred, rollback the database connection and
