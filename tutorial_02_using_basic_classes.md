@@ -8,7 +8,7 @@
 * [Update the create item route](#update-the-create-item-route)
 * [Update the update item route](#update-the-update-item-route)
 * [Update the partial update item route](#update-the-partial-update-item-route)
-* [Update the delete item route](#)
+* [Update the delete item route](#update-the-delete-item-route)
 
 ## Create a class to represent an item
 
