@@ -134,7 +134,7 @@ def fetch_one_item(uid):
     else:
         # The item was not found, so create the HTTP response object
         # using jsonpickle to serialize an error message for the user
-        message = {'message': 'item not found'}
+        message = {'message': 'Item not found'}
         response = Response(
             response=encode(value=message, unpicklable=False),
             status=404,
@@ -274,7 +274,7 @@ def update_item(uid):
             (item.name, item.description, item.completed, item.uid)
         )
         if not cursor.rowcount:
-            raise LookupError('item not found')
+            raise LookupError('Item not found')
         connection.commit()
 
         # Create the HTTP response object using jsonpickle to serialize
@@ -389,7 +389,7 @@ def partial_update_item(uid):
     else:
         # The item was not found, so create the HTTP response object
         # using jsonpickle to serialize an error message for the user
-        message = {'message': 'item not found'}
+        message = {'message': 'Item not found'}
         response = Response(
             response=encode(value=message, unpicklable=False),
             status=404,
@@ -426,7 +426,7 @@ def delete_item(uid):
         cursor.execute('DELETE FROM item WHERE uid = ?', (uid,))
 
         if not cursor.rowcount:
-            raise LookupError('item not found')
+            raise LookupError('Item not found')
         connection.commit()
 
         # Create the HTTP response object with no payload
