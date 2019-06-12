@@ -72,7 +72,7 @@ class Item(object):
 
                 if row:
                     # The item was found, so create an `Item` object
-                    result = Item(
+                    result = cls(
                         uid=row[0],
                         name=row[1],
                         description=row[2],
@@ -92,7 +92,7 @@ class Item(object):
                 # For each row, create an `Item` object
                 result = []
                 for row in rows.fetchall():
-                    item = Item(
+                    item = cls(
                         uid=row[0],
                         name=row[1],
                         description=row[2],
