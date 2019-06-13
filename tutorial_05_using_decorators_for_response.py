@@ -319,8 +319,10 @@ def create_response(function):
         # Create the response object with serialized data. The payload
         # is set to `None` if there was no result from the called
         # function, this is to ensure an empty payload.
+        if data is not None:
+            data = encode(value=data, unpicklable=False)
         return Response(
-            response=encode(value=data, unpicklable=False) if data else None,
+            response=data,
             status=status_code,
             mimetype='application/json'
         )
