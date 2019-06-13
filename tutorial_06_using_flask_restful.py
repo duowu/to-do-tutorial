@@ -332,7 +332,8 @@ def create_response(function):
 
 class ItemRoute(Resource):
     """
-
+    This route provides create, read, update, and delete (CRUD) actions
+    for the item resource using HTTP methods.
     """
 
     @create_response
