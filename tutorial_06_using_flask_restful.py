@@ -330,10 +330,10 @@ def create_response(function):
     return wrapper
 
 
-class ItemRoute(Resource):
+class ItemResource(Resource):
     """
-    This route provides create, read, update, and delete (CRUD) actions
-    for the item resource using HTTP methods.
+    This resource class provides create, read, update, and delete (CRUD)
+    actions for the item resource using HTTP methods.
     """
 
     @create_response
@@ -418,7 +418,7 @@ class ItemRoute(Resource):
         Item.fetch(uid=uid).delete()
 
 
-api.add_resource(ItemRoute, '/items', '/items/<int:uid>')
+api.add_resource(ItemResource, '/items', '/items/<int:uid>')
 
 
 def create_tables():
