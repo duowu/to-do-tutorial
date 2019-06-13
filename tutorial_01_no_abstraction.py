@@ -208,7 +208,7 @@ def update_item(uid):
     those supplied by the payload of the HTTP request.
 
     Args:
-        uid (uid): Unique identifier of the item
+        uid (int): Unique identifier of the item
 
     JSON Payload:
         {

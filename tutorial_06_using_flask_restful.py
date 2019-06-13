@@ -1,9 +1,12 @@
 import sqlite3
 from flask import Flask, request, Response
+from flask_restful import Api, Resource
+from functools import wraps
 from jsonpickle import encode
 
 db_path = 'app.db'  # The path to the SQLite3 database file
 app = Flask(__name__)  # The Flask application object
+api = Api(app)
 
 
 class Item(object):
@@ -269,248 +272,153 @@ class Item(object):
         return self
 
 
-@app.route('/hello_world')
-def hello_world():
+def create_response(function):
     """
-    HTTP GET route which simply returns "Hello, World!"
+    Wrapper decorator which wraps a function and creates a response from
+    the results.
 
-    Returns:
-        str: "Hello, World!"
-    """
-    return 'Hello, World!'
+    The wrapped function is called with all the passed arguments and
+    keyword arguments and returned data is saved. All exceptions are
+    caught and an error message is created from the exception.
 
-
-@app.route('/items', methods=['GET'])
-def fetch_all_items():
-    """
-    HTTP GET route to fetch all To-Do items from the database.
-
-    Returns:
-        Response: HTTP response object with a payload of a JSON encoded
-            string of a collection of all the items retrieved from the
-            database
-    """
-    # Create the HTTP response object using jsonpickle to serialize the
-    # response data which is a list of all the items obtained by using
-    # the `Item.fetch` method.
-    return Response(
-        response=encode(value=Item.fetch(), unpicklable=False),
-        status=200,
-        mimetype='application/json'
-    )
-
-
-@app.route('/items/<int:uid>')
-def fetch_one_item(uid):
-    """
-    HTTP GET route to fetch a single To-Do item from the database by its
-    unique identifier.
+    A Flask response object is created where the payload is a JSON
+    serialized string of the results (or error message) created with
+    the `encode` function of the `jsonpickle` package. The status code
+    is 200 if no exceptions are raised, 404 if a lookup exception was
+    raise, and 400 for all other exceptions.
 
     Args:
-        uid (int): Unique identifier of the item
+        function (Callable function): Function to wrap
 
     Returns:
-        Response: HTTP response object with a payload of a JSON encoded
-            string of the item retrieved from the database. If the item
-            is not found, a 404 response object is returned with a
-            message to the user.
+        Callable function: Wrapped function
     """
-    try:
-        # Create the HTTP response object using jsonpickle to serialize
-        # the response data which is an instance of `item` obtained by
-        # using the `Item.fetch` method.
-        response = Response(
-            response=encode(value=Item.fetch(uid=uid), unpicklable=False),
-            status=200,
-            mimetype='application/json'
-        )
-    except Exception as error:
-        # If any errors occurred, create the HTTP response object using
-        # jsonpickle to serialize an error message for the user. If the
-        # raised exception is a lookup error, then set the response
-        # status code to 404.
-        message = {'message': str(error)}
-        response = Response(
-            response=encode(value=message, unpicklable=False),
-            status=404 if isinstance(error, LookupError) else 400,
-            mimetype='application/json'
-        )
 
-    return response
+    @wraps(wrapped=function)
+    def wrapper(*args, **kwargs):
+        """
+        Wrap a function. See above for details.
 
+        Args:
+            *args: Arguments to pass through to the wrapped function
+            **kwargs: Keyword arguments to pass through to the wrapped
+                function
 
-@app.route('/items', methods=['POST'])
-def create_item():
-    """
-    HTTP POST route to create a To-Do item in the database based on
-    data supplied from the user.
+        Returns:
+            Response: Flask response object
+        """
+        try:
+            # Execute the function and store any returned data
+            data = function(*args, **kwargs)
+            status_code = 200
 
-    JSON Payload:
-        {
-            "name": string,         <-- Required name of the item
-            "description": string,  <-- Optional description of the item
-            "completed": boolean    <-- Optional status of the item
-        }
+        except Exception as error:
+            # Create a message for the user on any raised exceptions and
+            # change the status code based on the exception type
+            data = {'message': str(error)}
+            status_code = 404 if isinstance(error, LookupError) else 400
 
-    Returns:
-        Response: HTTP response object with a payload of a JSON encoded
-            string of the newly created item in the database. If any
-            errors occurred during the operation, a response object is
-            returned with the error message.
-    """
-    # Get the deserialized JSON data from the HTTP request
-    data = request.json
-
-    try:
-        # Extract the required `name` attribute and optional
-        # `description` and `completed` attributes and create a new
-        # record in the database.
-        item = Item().from_dict(data=data).create()
-
-        # Create the HTTP response object using jsonpickle to serialize
-        # the response data
-        response = Response(
-            response=encode(value=item, unpicklable=False),
-            status=200,
-            mimetype='application/json'
-        )
-    except Exception as error:
-        # If any errors occurred, create the HTTP response object using
-        # jsonpickle to serialize an error message for the user
-        message = {'message': str(error)}
-        response = Response(
-            response=encode(value=message, unpicklable=False),
-            status=400,
+        # Create the response object with serialized data. The payload
+        # is set to `None` if there was no result from the called
+        # function, this is to ensure an empty payload.
+        return Response(
+            response=encode(value=data, unpicklable=False) if data else None,
+            status=status_code,
             mimetype='application/json'
         )
 
-    return response
+    return wrapper
 
 
-@app.route('/items/<int:uid>', methods=['PUT'])
-def update_item(uid):
+class ItemResource(Resource):
     """
-    HTTP PUT route to update an item by replacing its attributes with
-    those supplied by the payload of the HTTP request.
-
-    Args:
-        uid (int): Unique identifier of the item
-
-    JSON Payload:
-        {
-            "name": string,         <-- Required name of the item
-            "description": string,  <-- Optional description of the item
-            "completed": boolean    <-- Optional status of the item
-        }
-
-    Returns:
-        Response: HTTP response object with a payload of a JSON encoded
-            string of the updated item in the database. If any errors
-            occurred during the operation, a response object is returned
-            with the error message.
+    This resource class provides create, read, update, and delete (CRUD)
+    actions for the item resource using HTTP methods.
     """
-    # Get the deserialized JSON data from the HTTP request
-    data = request.json
 
-    try:
-        # Extract the required `name` attribute and optional
-        # `description` and `completed` attributes and update the
-        # record in the database.
-        item = Item.fetch(uid=uid).from_dict(data=data).update()
+    @create_response
+    def get(self, uid=None):
+        """
+        HTTP GET method to fetch one To-Do item by its unique identifier
+        or a collection of all To-Do items from the database.
 
-        # Create the HTTP response object using jsonpickle to serialize
-        # the response data
-        response = Response(
-            response=encode(value=item, unpicklable=False),
-            status=200,
-            mimetype='application/json'
-        )
-    except Exception as error:
-        # If any errors occurred, create the HTTP response object using
-        # jsonpickle to serialize an error message for the user
-        message = {'message': str(error)}
-        response = Response(
-            response=encode(value=message, unpicklable=False),
-            status=400,
-            mimetype='application/json'
-        )
+        Args:
+            uid (int): Optional. Unique identifier of the item
 
-    return response
+        Returns:
+            Item or List[Item]: One item or a collection of all items
+                retrieved from the database
+        """
+        return Item.fetch(uid)
 
+    @create_response
+    def post(self):
+        """
+        HTTP POST method to create a To-Do item in the database based on
+        the data supplied from the user.
 
-@app.route('/items/<int:uid>', methods=['PATCH'])
-def partial_update_item(uid):
-    """
-    HTTP PATCH route to partially update an item with attributes
-    supplied by the payload of the HTTP request.
+        JSON Payload:
+            {
+                "name": string,         <-- Required name of the item
+                "description": string,  <-- Optional description of the item
+                "completed": boolean    <-- Optional status of the item
+            }
 
-    Args:
-        uid (int): Unique identifier of the item
+        Returns:
+            Item: Created item
+        """
+        # Get the deserialized JSON data from the HTTP request, extract
+        # the required and optional attributes, and create a new item in
+        # the database.
+        return Item().from_dict(data=request.json).create()
 
-    Returns:
-        Response: HTTP response object with a payload of a JSON encoded
-            string of the updated item in the database. If any errors
-            occurred during the operation, a response object is returned
-            with the error message.
-    """
-    # Get the deserialized JSON data from the HTTP request
-    data = request.json
+    @create_response
+    def put(self, uid):
+        """
+        HTTP PUT method to update an item by replacing its attributes
+        with those supplied by the payload of the HTTP request.
 
-    try:
-        # Extract the required `name` attribute and optional
-        # `description` and `completed` attributes and update the
-        # record in the database.
-        item = Item.fetch(uid=uid).from_dict(data=data).update()
+        Args:
+            uid (int): Unique identifier of the item
 
-        # Create the HTTP response object using jsonpickle to serialize
-        # the response data
-        response = Response(
-            response=encode(value=item, unpicklable=False),
-            status=200,
-            mimetype='application/json'
-        )
-    except Exception as error:
-        # If any errors occurred, create the HTTP response object using
-        # jsonpickle to serialize an error message for the user
-        message = {'message': str(error)}
-        response = Response(
-            response=encode(value=message, unpicklable=False),
-            status=400,
-            mimetype='application/json'
-        )
+        Returns:
+            Item: Updated item
+        """
+        # Get the deserialized JSON data from the HTTP request, extract
+        # the required and optional attributes, and update the item in
+        # the database.
+        return Item.fetch(uid=uid).from_dict(data=request.json).update()
 
-    return response
+    @create_response
+    def patch(self, uid):
+        """
+        HTTP PATCH method to partially update an item with attributes
+        supplied by the payload of the HTTP request.
 
+        Args:
+            uid (int): Unique identifier of the item
 
-@app.route('/items/<int:uid>', methods=['DELETE'])
-def delete_item(uid):
-    """
-    HTTP DELETE route to delete an item from the database.
+        Returns:
+            Item: Updated item
+        """
+        # Get the deserialized JSON data from the HTTP request, extract
+        # the required and optional attributes, and update the item in
+        # the database.
+        return Item.fetch(uid=uid).from_dict(data=request.json).update()
 
-    Args:
-        uid (int): Unique identifier of the item
+    @create_response
+    def delete(self, uid):
+        """
+        HTTP DELETE method to delete an item from the database.
 
-    Returns:
-        Response: HTTP response object with no payload but a successful
-            status code. If any errors occurred during the operation, a
-            response object is returned with the error message.
-    """
-    try:
-        # Delete the item from the database and create the HTTP response
-        # object with no payload
+        Args:
+            uid (int): Unique identifier of the item
+        """
+        # Fetch and delete the item from the database
         Item.fetch(uid=uid).delete()
-        response = Response(status=200)
-    except Exception as error:
-        # If any errors occurred, create the HTTP response object using
-        # jsonpickle to serialize an error message for the user
-        message = {'message': str(error)}
-        response = Response(
-            response=encode(value=message, unpicklable=False),
-            status=400,
-            mimetype='application/json'
-        )
 
-    return response
+
+api.add_resource(ItemResource, '/items', '/items/<int:uid>')
 
 
 def create_tables():
