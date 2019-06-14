@@ -1,0 +1,191 @@
+import unittest
+from deepdiff import DeepDiff
+import tutorial_07_using_object_relational_mapping as todo_app
+
+
+class TestToDoApp(unittest.TestCase):
+    """
+    Unit tests for the To-Do API.
+
+    Before each unit test, keep track of the existing rows in the
+    database. After each unit test, any newly added rows are deleted.
+
+    Class Attributes:
+        app (flask.testing.FlaskClient): Flask test client to invoke
+            HTTP methods for the To-Do API
+        existing_uids (set): Collection of unique identifiers of the
+            existing rows in the `item` table in the database
+    """
+
+    app = None
+    existing_uids = set()
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Before any unit tests, create the Flask test client and make
+        sure the tables are created in the database.
+        """
+        cls.app = todo_app.app.test_client()
+        todo_app.db.create_all()
+
+    def setUp(self):
+        """
+        Before each unit test, keep track of the existing rows in the
+        `item` table in the database.
+        """
+        # Get all the current records from the `item` table in the
+        # database and store them to the `existing_uids` set
+        self.existing_uids.update(
+            [item.uid for item in todo_app.Item.query.all()]
+        )
+
+    def tearDown(self):
+        """
+        After each unit test, delete any newly created rows in the
+        `item` table in the database.
+        """
+        # Get all the current records from the `item` table in the
+        # database. If any of them are not in the `existing_uids` set,
+        # then delete them from the database.
+        todo_app.db.session.commit()
+        for item in todo_app.Item.query.all():
+            if item.uid not in self.existing_uids:
+                todo_app.db.session.delete(item)
+        todo_app.db.session.commit()
+
+        self.existing_uids.clear()
+
+    def test_items_crud_actions(self):
+        """
+        Unit test for CRUD actions for the `item` resource.
+            - Create the item
+            - Fetch the item by its unique identifier
+            - Fetch all items and make sure the item is in the returned
+              list
+            - Update the item
+            - Fetch the item by its unique identifier to check the update
+            - Partially update the item
+            - Fetch the item by its unique identifier to check the update
+            - Delete the item
+            - Fetch the item by its unique identifier to check the update
+        """
+        # Create the item
+        item_data = {
+            'name': 'Create API',
+            'description': 'Create a To-Do API'
+        }
+        response = self.app.post('/items', json=item_data)
+        expected = {
+            'name': 'Create API',
+            'description': 'Create a To-Do API',
+            'completed': False
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        item_uid = data.pop('uid')
+        self.assertTrue(item_uid)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Fetch the item by its unique identifier
+        response = self.app.get(f'/items/{item_uid}')
+        expected = {
+            'uid': item_uid,
+            'name': 'Create API',
+            'description': 'Create a To-Do API',
+            'completed': False
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Fetch all items - make sure the item is in the returned list
+        response = self.app.get('/items')
+        expected = {
+            'uid': item_uid,
+            'name': 'Create API',
+            'description': 'Create a To-Do API',
+            'completed': False
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, list)
+        found_item = False
+        for item in data:
+            self.assertIsInstance(item, dict)
+            if item.get('uid') == item_uid:
+                self.assertFalse(DeepDiff(item, expected, ignore_order=True))
+                found_item = True
+        self.assertTrue(found_item)
+
+        # Update the item
+        update_data = {
+            'name': 'Update API',
+            'description': 'Update the To-Do API'
+        }
+        response = self.app.put(f'/items/{item_uid}', json=update_data)
+        expected = {
+            'uid': item_uid,
+            'name': 'Update API',
+            'description': 'Update the To-Do API',
+            'completed': False
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Fetch the item by its unique identifier to check the update
+        response = self.app.get(f'/items/{item_uid}')
+        expected = {
+            'uid': item_uid,
+            'name': 'Update API',
+            'description': 'Update the To-Do API',
+            'completed': False
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Partially update the item
+        update_data = {'completed': True}
+        response = self.app.patch(f'/items/{item_uid}', json=update_data)
+        expected = {
+            'uid': item_uid,
+            'name': 'Update API',
+            'description': 'Update the To-Do API',
+            'completed': True
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Fetch the item by its unique identifier to check the update
+        response = self.app.get(f'/items/{item_uid}')
+        expected = {
+            'uid': item_uid,
+            'name': 'Update API',
+            'description': 'Update the To-Do API',
+            'completed': True
+        }
+        self.assertEqual(response.status_code, 200)
+        data = response.json
+        self.assertIsInstance(data, dict)
+        self.assertFalse(DeepDiff(data, expected, ignore_order=True))
+
+        # Delete the item
+        response = self.app.delete(f'/items/{item_uid}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, b'')
+
+        # Fetch the item by its unique identifier to check the delete
+        response = self.app.get(f'/items/{item_uid}')
+        self.assertEqual(response.status_code, 404)
+
+
+if __name__ == '__main__':
+    unittest.main()
