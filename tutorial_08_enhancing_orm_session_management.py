@@ -94,7 +94,7 @@ class Item(db.Model):
                 raise LookupError('Item not found')
             return item
         else:
-            return Item.query.all()
+            return cls.query.all()
 
     def save(self):
         """
