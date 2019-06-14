@@ -6,3 +6,4 @@
 * [Using data access objects](./tutorial_04_using_data_access_objects.md)
 * [Using decorators for response](./tutorial_05_using_decorators_for_response.md)
 * [Using Flask-RESTful](./tutorial_06_using_flask_restful.md)
+* [Using object-relational mapping](./tutorial_07_using_object_relational_mapping.md)

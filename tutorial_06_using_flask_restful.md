@@ -31,7 +31,7 @@ from jsonpickle import encode
 
 db_path = 'app.db'  # The path to the SQLite3 database file
 app = Flask(__name__)  # The Flask application object
-api = Api(app)
+api = Api(app)  # The API object for Flask-RESTful
 
 ...
 ```
@@ -241,7 +241,7 @@ class ItemResource(Resource):
 ...
 
 app = Flask(__name__)  # The Flask application object
-api = Api(app)
+api = Api(app)  # The API object for Flask-RESTful
 
 
 class Item(object):
