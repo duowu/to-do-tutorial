@@ -7,3 +7,4 @@
 * [Using decorators for response](./tutorial_05_using_decorators_for_response.md)
 * [Using Flask-RESTful](./tutorial_06_using_flask_restful.md)
 * [Using object-relational mapping](./tutorial_07_using_object_relational_mapping.md)
+* [Enhancing ORM session management](./tutorial_08_enhancing_orm_session_management.md)
