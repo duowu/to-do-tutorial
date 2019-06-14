@@ -6,11 +6,11 @@ from jsonpickle import encode
 
 db_path = 'app.db'  # The path to the SQLite3 database file
 app = Flask(__name__)  # The Flask application object
-api = Api(app)
+api = Api(app)  # The API object for Flask-RESTful
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-db = SQLAlchemy(app=app)
+db = SQLAlchemy(app=app)  # The SQLAlchemy object for ORM
 
 
 class Item(db.Model):
